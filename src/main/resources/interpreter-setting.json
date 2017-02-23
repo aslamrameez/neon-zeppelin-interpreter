@@ -1,0 +1,49 @@
+[
+  {
+    "group": "neon",
+    "name": "neon",
+    "className": "com.flytxt.interpreter.NeonInterpreter",
+    "properties": {
+      "neon.command.timeout.millisecs": {
+        "envName": "NEON_COMMAND_TIMEOUT",
+        "propertyName": "neon.command.timeout.millisecs",
+        "defaultValue": "60000",
+        "description": "DML command time out in millisecs. Default = 60000"
+      },
+      "marathon.url": {
+        "envName": null,
+        "propertyName": "marathon.url",
+        "defaultValue": "",
+        "description": "marathon url"
+      },
+      "database.user": {
+        "envName": null,
+        "propertyName": "database.user",
+        "defaultValue": "",
+        "description": "database user"
+      },
+      "database.password": {
+        "envName": null,
+        "propertyName": "database.password",
+        "defaultValue": "",
+        "description": "database password"
+      },
+      "database.schema": {
+        "envName": null,
+        "propertyName": "database.schema",
+        "defaultValue": "",
+        "description": "database schema"
+      },
+      "zeppelin.neon.principal": {
+        "envName": null,
+        "propertyName": "zeppelin.neon.principal",
+        "defaultValue": "",
+        "description": "Kerberos principal"
+      }
+    },
+    "editor": {
+      "language": "neon",
+      "editOnDblClick": false
+    }
+  }
+]
