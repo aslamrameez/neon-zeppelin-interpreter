@@ -13,11 +13,12 @@ import java.util.concurrent.Callable;
  * Created by root on 22/2/17.
  */
 public class ExecuteStatement implements Callable<Integer> {
-    public static Logger logger = LoggerFactory.getLogger(ExecuteStatement.class);
+    private static Logger logger = LoggerFactory.getLogger(ExecuteStatement.class);
 
-    volatile String[] dml;
+    private volatile String[] dml;
 
-    NeonStore store;
+    private NeonStore store;
+    static ParseDMLStatement sta = new ParseDMLStatement();
 
     public ExecuteStatement(final String[] dml,NeonStore store){
        this.dml=dml;
@@ -25,12 +26,12 @@ public class ExecuteStatement implements Callable<Integer> {
     }
 
     public Integer call() throws Exception {
-      int count=0;
+        int count=0;
+
         for(String command:dml){
             logger.info(command);
             command=  command.trim();
-            ParseDMLStatement sta = new ParseDMLStatement();
-            System.out.println(sta.parse(command));
+            sta.parse(command).evaluate(store,command);
             count++;
         }
         return count;
