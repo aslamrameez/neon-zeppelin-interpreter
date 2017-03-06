@@ -11,7 +11,7 @@
         <java.version>1.6</java.version>
         <junit.version>4.12</junit.version>
         <zeppelin.version>0.7.0</zeppelin.version>
-        <neon.version>0.0.1</neon.version>
+        <neon.version>0.0.3</neon.version>
     </properties>
   <dependencies>
       <dependency>
@@ -34,6 +34,16 @@
           <groupId>commons-dbcp</groupId>
           <artifactId>commons-dbcp</artifactId>
           <version>1.4</version>
+      </dependency>
+      <dependency>
+          <groupId>javax.json</groupId>
+          <artifactId>javax.json-api</artifactId>
+          <version>1.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish</groupId>
+          <artifactId>javax.json</artifactId>
+          <version>1.0.4</version>
       </dependency>
   </dependencies>
     <build>

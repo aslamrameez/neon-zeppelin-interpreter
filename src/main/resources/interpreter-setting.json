@@ -34,6 +34,12 @@
         "defaultValue": "",
         "description": "database schema"
       },
+      "file.path": {
+        "envName": null,
+        "propertyName": "file.path",
+        "defaultValue": "/Files/Global/Ostrich_Uploader/neon",
+        "description": "Temporary neon storage space"
+      },
       "zeppelin.neon.principal": {
         "envName": null,
         "propertyName": "zeppelin.neon.principal",

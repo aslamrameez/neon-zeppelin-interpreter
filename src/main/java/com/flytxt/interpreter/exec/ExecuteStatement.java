@@ -27,13 +27,19 @@ public class ExecuteStatement implements Callable<Integer> {
 
     public Integer call() throws Exception {
         int count=0;
-
-        for(String command:dml){
+    try {
+        for (String command : dml) {
             logger.info(command);
-            command=  command.trim();
-            sta.parse(command).evaluate(store,command);
+            command = command.trim();
+            sta.parse(store, command);
             count++;
         }
+    }catch (Exception e ){
+        e.printStackTrace();
+        store.rollback();
+        throw  e;
+    }
+        store.commit();
         return count;
     }
 }

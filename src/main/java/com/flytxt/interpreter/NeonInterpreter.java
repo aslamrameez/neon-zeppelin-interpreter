@@ -2,8 +2,8 @@ package com.flytxt.interpreter;
 
 import com.flytxt.interpreter.exec.ExecuteStatement;
 
+import com.flytxt.neonstore.NeonConfig;
 import com.flytxt.neonstore.NeonStoreException;
-import com.flytxt.neonstore.NeonStoreInit;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
@@ -15,7 +15,6 @@ import java.util.Properties;
 import java.util.concurrent.*;
 
 import com.flytxt.neonstore.NeonStore;
-import static org.apache.zeppelin.interpreter.Interpreter.*;
 import static org.apache.zeppelin.interpreter.InterpreterResult.Code;
 
 
@@ -30,16 +29,13 @@ public class NeonInterpreter extends Interpreter {
     private static final String DATABASE_USER ="database.user";
     private static final String DATABASE_PASSWORD ="database.password";
     private static final String DATABASE_SCHEMA ="database.schema";
-
+    private static final String NEON_TMP_FILE_NAME ="file.path";
     public static Logger logger = LoggerFactory.getLogger(NeonInterpreter.class);
     ConcurrentHashMap<String, Future<Integer>> executors;
 
     ExecutorService service;
-    String marathonurl;
-    String databaseuser;
-    String databasepassword;
-    String schema;
 
+    NeonConfig conig;
 
     public NeonInterpreter(Properties property) {
         super(property);
@@ -50,12 +46,16 @@ public class NeonInterpreter extends Interpreter {
         logger.info("Database user: {}", getProperty(DATABASE_USER));
         logger.debug("Database password: {}", getProperty(DATABASE_PASSWORD));
         logger.info("Database schema: {}", getProperty(DATABASE_SCHEMA));
-        marathonurl=getProperty(MARATHON_URL);
-        databaseuser=getProperty(DATABASE_USER);
-        databasepassword=getProperty(DATABASE_PASSWORD);
-        schema=getProperty(DATABASE_SCHEMA);
+        logger.info("File name schema: {}", getProperty(NEON_TMP_FILE_NAME));
+
         executors = new ConcurrentHashMap<String, Future<Integer>>();
         service = Executors.newCachedThreadPool();
+        conig= NeonConfig.builder().marathonurl(getProperty(MARATHON_URL))
+                .username(getProperty(DATABASE_USER))
+                .password(getProperty(DATABASE_PASSWORD))
+                .schema(getProperty(DATABASE_SCHEMA))
+                .fileName(getProperty(NEON_TMP_FILE_NAME))
+                .build();
     }
 
     public void close() {
@@ -71,21 +71,15 @@ public class NeonInterpreter extends Interpreter {
             String cmd = StringUtils.join(lines, "");
 
             String[] dmlstatements = StringUtils.split(cmd, ";");
-            logger.info("Paragraph " + contextInterpreter.getParagraphId()
-                    + " return with exit value: " + 0);
-            store= NeonStoreInit.builder().
-                    marathonurl(marathonurl)
-                    .username(databaseuser)
-                    .password(databasepassword)
-                    .schema(schema)
-                    .build();
+            logger.info("Paragraph {}",  contextInterpreter.getParagraphId());
+            store= conig.getNewNeonStore();
             result =service.submit(new ExecuteStatement(dmlstatements,store));
             executors.put(contextInterpreter.getParagraphId(),  result);
 
-            logger.info("Paragraph " + contextInterpreter.getParagraphId()
-                    + " return with exit value: " + 0);
+            logger.info("dml {}" , s);
 
             result.get(Long.parseLong(getProperty(TIMEOUT_PROPERTY)),TimeUnit.MILLISECONDS);
+            store.commit();
             return new InterpreterResult(Code.SUCCESS, "SUCCESS");
 
         } catch (TimeoutException e) {
@@ -102,8 +96,8 @@ public class NeonInterpreter extends Interpreter {
             if (exitValue == 143) {
                 code = Code.INCOMPLETE;
                 message += "Paragraph received a SIGTERM\n";
-                logger.info("The paragraph " + contextInterpreter.getParagraphId()
-                        + " stopped executing: " + message);
+                logger.info("The paragraph {} stopped executing: {}" , contextInterpreter.getParagraphId()
+                        ,message);
             }
             message += "ExitValue: " + exitValue;
             result.cancel(true);
@@ -116,16 +110,17 @@ public class NeonInterpreter extends Interpreter {
                 } catch (NeonStoreException e1) {
                     e1.printStackTrace();
                 }
-            return new InterpreterResult(Code.ERROR, e.getMessage());
+               logger.error("Error in neon" ,e);
+
+            return new InterpreterResult(Code.ERROR, e.getLocalizedMessage());
         }
 
         finally {
-            try {
-                store.commit();
-            } catch (NeonStoreException e) {
-                e.printStackTrace();
-            }
-            executors.remove(contextInterpreter.getParagraphId()).cancel(true);
+
+            result =  executors.remove(contextInterpreter.getParagraphId());
+            if(result !=null)
+                result.cancel(true);
+
         }
     }
 
