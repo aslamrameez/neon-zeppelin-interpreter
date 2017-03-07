@@ -26,12 +26,15 @@ public abstract class Operation {
     }
 
     protected String valid(String literal){
-        if( literal.startsWith("\'") && literal.endsWith("\'") ){
-            literal= StringUtils.removeStart(literal,"\'");
-            literal= StringUtils.removeEnd(literal,"\'");
-            return literal;
-        }else if(StringUtil.isNumeric(literal)){
-            return literal;
+        if(StringUtils.isNotBlank(literal)) {
+            literal = literal.trim();
+            if (literal.startsWith("\'") && literal.endsWith("\'")) {
+                literal = StringUtils.removeStart(literal, "\'");
+                literal = StringUtils.removeEnd(literal, "\'");
+                return literal;
+            } else if (StringUtil.isNumeric(literal)) {
+                return literal;
+            }
         }
       throw new ParserException("Invalid character found "+literal);
     }

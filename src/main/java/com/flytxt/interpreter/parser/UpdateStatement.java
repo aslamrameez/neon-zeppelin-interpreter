@@ -37,12 +37,12 @@ public class UpdateStatement extends Operation{
 
                 if(count>2) {
                     conditionMap=    createConditionMap(match.group(3));
-                    logger.debug("condition {}", conditionMap.toString());
+                    logger.info("condition {}", conditionMap.toString());
                 }
                 break;
             }
         }
-        logger.debug("updateValue {}", updateValue.toString());
+        logger.info("updateValue {}", updateValue.toString());
         store.update(tablename,updateValue,conditionMap);
     }
 
@@ -51,7 +51,7 @@ public class UpdateStatement extends Operation{
      Map<String,String> map = new HashMap<String, String>();
       for(String p:proj){
           String[] s=p.split("=");
-          map.put(s[0].toUpperCase(),valid(s[1]));
+          map.put(s[0].trim().toUpperCase(),valid(s[1]));
       }
       return map;
     }
@@ -60,7 +60,7 @@ public class UpdateStatement extends Operation{
         Map<String,String> map = new HashMap<String, String>();
         for(String p:proj){
             String[] s=p.split("=");
-            map.put(s[0].toUpperCase(),valid(s[1]));
+            map.put(s[0].trim().toUpperCase(),valid(s[1]));
         }
         return map;
     }
