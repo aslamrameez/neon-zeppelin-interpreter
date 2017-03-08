@@ -8,11 +8,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.resource.ResourcePool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.flytxt.neonstore.NeonStore;
 import static org.apache.zeppelin.interpreter.InterpreterResult.Code;
@@ -24,7 +27,6 @@ import static org.apache.zeppelin.interpreter.InterpreterResult.Code;
 public class NeonInterpreter extends Interpreter {
 
     private static final String TIMEOUT_PROPERTY = "neon.command.timeout.millisecs";
-
     private static final String MARATHON_URL ="marathon.url";
     private static final String DATABASE_USER ="database.user";
     private static final String DATABASE_PASSWORD ="database.password";
@@ -36,6 +38,8 @@ public class NeonInterpreter extends Interpreter {
     ExecutorService service;
 
     NeonConfig conig;
+    Pattern pattern=Pattern.compile("(z\\((.*?)\\))");
+
 
     public NeonInterpreter(Properties property) {
         super(property);
@@ -46,7 +50,7 @@ public class NeonInterpreter extends Interpreter {
         logger.info("Database user: {}", getProperty(DATABASE_USER));
         logger.debug("Database password: {}", getProperty(DATABASE_PASSWORD));
         logger.info("Database schema: {}", getProperty(DATABASE_SCHEMA));
-        logger.info("File name schema: {}", getProperty(NEON_TMP_FILE_NAME));
+        logger.info("File name : {}", getProperty(NEON_TMP_FILE_NAME));
 
         executors = new ConcurrentHashMap<String, Future<Integer>>();
         service = Executors.newCachedThreadPool();
@@ -67,6 +71,8 @@ public class NeonInterpreter extends Interpreter {
         Future<Integer> result=null;
         NeonStore store=null;
         try {
+
+            s=replaceFromZepplinContext(s,contextInterpreter.getResourcePool());
             String[] lines = StringUtils.split(s, '\n');
             String cmd = StringUtils.join(lines, "");
 
@@ -122,6 +128,21 @@ public class NeonInterpreter extends Interpreter {
                 result.cancel(true);
 
         }
+    }
+
+    String replaceFromZepplinContext(String s, ResourcePool pool){
+        Matcher matcher= pattern.matcher(s);
+        StringBuilder str= new StringBuilder(s);
+        int buffer=0;
+        while(matcher.find()){
+            int groupOne=matcher.group(1).length();
+            String string= matcher.group(2);
+            logger.debug("replace string {}",string);
+            String replace_str=pool.get(string).get().toString();
+            str.replace(buffer+matcher.start(1),buffer+matcher.end(1), replace_str);
+            buffer +=replace_str.length()-groupOne;
+        }
+        return str.toString();
     }
 
     public void cancel(InterpreterContext context) {

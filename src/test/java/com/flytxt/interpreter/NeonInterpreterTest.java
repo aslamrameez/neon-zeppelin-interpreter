@@ -2,6 +2,8 @@ package com.flytxt.interpreter;
 
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.resource.LocalResourcePool;
+import org.apache.zeppelin.resource.ResourcePool;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,10 +27,15 @@ public class NeonInterpreterTest {
     @org.junit.Before
     public void setUp() throws Exception {
         Properties p = new Properties();
+        p.setProperty("marathon.url","http://192.168.150.45:8080");
+        p.setProperty("database.schema","neon");
+        p.setProperty("database.user","root");
+        p.setProperty("database.password","bullet");
+        p.setProperty("file.path","/Files/Global/Ostrich_Uploader/neon");
         p.setProperty("neon.command.timeout.millisecs", "2000");
         neon = new NeonInterpreter(p);
-
-        context = new InterpreterContext("", "1", null, "", "", null, null, null, null, null, null, null);
+        ResourcePool pool = new LocalResourcePool("testing");
+        context = new InterpreterContext("", "1", null, "", "", null, null, null, null, pool, null, null);
         neon.open();
     }
 
@@ -38,6 +45,7 @@ public class NeonInterpreterTest {
 
     @Test
     public void test() {
+
         result = neon.interpret("INSERT INTO PROFILE VALUES('rameez',3433,565,5677),('aslam1',3433,565,5677),('asdsada',3433,565,5677)", context);
 
         assertEquals(InterpreterResult.Code.SUCCESS, result.code());
@@ -60,7 +68,11 @@ public class NeonInterpreterTest {
 
     @Test
     public void update() {
-        result = neon.interpret("UPDATE PROFILE  SET optype=1,profileValue=20 WHERE msisdn = 919172929920 AND name=Age and partnerId=1;" +
+
+        context.getResourcePool().put("pen","1");
+        context.getResourcePool().put("msisdn","919172929920");
+
+        result = neon.interpret("UPDATE METRIC SET optype=4,metric_Value=20,day_Aggr=1,month_Aggr=1,week_Aggr=1,date=14022017 WHERE msisdn=919172929920 AND name='Usage1' AND partner_Id=z(pen)" +
                 "\n", context);
 
         assertEquals(InterpreterResult.Code.SUCCESS, result.code());
