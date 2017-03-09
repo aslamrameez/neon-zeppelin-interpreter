@@ -9,6 +9,7 @@ import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.resource.ResourcePool;
+import org.jsoup.helper.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,12 +100,6 @@ public class NeonInterpreter extends Interpreter {
             logger.error("Can not run " + s, e);
             Code code = Code.ERROR;
             String message = "";
-            if (exitValue == 143) {
-                code = Code.INCOMPLETE;
-                message += "Paragraph received a SIGTERM\n";
-                logger.info("The paragraph {} stopped executing: {}" , contextInterpreter.getParagraphId()
-                        ,message);
-            }
             message += "ExitValue: " + exitValue;
             result.cancel(true);
 
@@ -130,17 +125,21 @@ public class NeonInterpreter extends Interpreter {
         }
     }
 
-    String replaceFromZepplinContext(String s, ResourcePool pool){
+   private String replaceFromZepplinContext(String s, ResourcePool pool){
         Matcher matcher= pattern.matcher(s);
         StringBuilder str= new StringBuilder(s);
         int buffer=0;
         while(matcher.find()){
             int groupOne=matcher.group(1).length();
-            String string= matcher.group(2);
+            String string= matcher.group(2).trim();
+            if(StringUtils.startsWith(string,"\"") && StringUtils.endsWith(string,"\"")){
+                string=  StringUtils.removeStart(string,"\"");
+                string=StringUtils.removeEnd(string,"\"");
             logger.debug("replace string {}",string);
             String replace_str=pool.get(string).get().toString();
             str.replace(buffer+matcher.start(1),buffer+matcher.end(1), replace_str);
             buffer +=replace_str.length()-groupOne;
+            }
         }
         return str.toString();
     }
