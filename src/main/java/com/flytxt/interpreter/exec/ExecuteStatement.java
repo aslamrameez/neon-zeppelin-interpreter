@@ -39,7 +39,6 @@ public class ExecuteStatement implements Callable<Integer> {
         store.rollback();
         throw  e;
     }
-        store.commit();
         return count;
     }
 }
